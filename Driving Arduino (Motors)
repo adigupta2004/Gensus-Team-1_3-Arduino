@@ -1,0 +1,133 @@
+//For the Arduino that controls driving:
+
+
+const int lm1 = 2;
+const int lm2 = 4;
+const int rm1 = 7;
+const int rm2 = 8;
+const int enA = 3;
+const int enB = 5;
+const int trigPin = 12;
+const int echoPin = 13;
+
+const int p1 = 14;//a0
+const int p2 = 15;//a1
+const int pen = 6;
+
+const int slm1 = 16;//a2
+const int slm2 = 17;//a3
+const int srm1 = 18;//a4
+const int srm2 = 19;//a5
+
+const int sena = 9;
+const int senb = 10;
+
+long duration;
+float distanceincm;
+int i=0, min;
+float distancearray[100], anglearray[100];
+
+void shooting_motor_control(int a){
+  digitalWrite(slm1, 0);
+	digitalWrite(slm2, 1);
+	digitalWrite(srm1, 0);
+	digitalWrite(srm2, 1);
+	analogWrite(sena, abs(a));
+	analogWrite(senb, abs(a));
+}
+
+void setup() {
+	Serial.begin(9600);
+	pinMode(lm1, OUTPUT);
+	pinMode(lm2, OUTPUT);
+	pinMode(rm1, OUTPUT);
+	pinMode(rm2, OUTPUT);
+	pinMode(enA, OUTPUT);
+	pinMode(enB, OUTPUT);
+	Serial.begin(9600); // Initializes serial communication at 9600 bps.	
+	
+	pinMode(p1, OUTPUT);
+	pinMode(p2, OUTPUT);
+	pinMode(slm1, OUTPUT);
+	pinMode(slm2, OUTPUT);
+	pinMode(srm1, OUTPUT);
+	pinMode(srm2, OUTPUT);
+	pinMode(sena, OUTPUT);
+	pinMode(senb, OUTPUT);
+}
+
+float measureDistance(){
+  //Clears the trigPin
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+  // Calculating the distance
+  distanceincm = duration * 0.034 / 2;
+  return distanceincm;
+}
+
+void motor_control(int a,int b){
+	digitalWrite(lm1, a>=0?0:1);
+	digitalWrite(lm2, a>0?1:0);
+	digitalWrite(rm1, b>=0?0:1);
+	digitalWrite(rm2, b>0?1:0);
+	analogWrite(enA,abs(a));//assign left and right pwm pins
+	analogWrite(enB,abs(b));
+}
+
+void piston_control(bool run){
+  if(run){
+    digitalWrite(p1, 0);
+    digitalWrite(p2, 1);
+    analogWrite(pen, 150);
+  }
+  else{
+    digitalWrite(p1, 0);
+    digitalWrite(p2, 0);
+  }
+}
+
+void loop() {
+  if (Serial.available()) { // If data is available to read,
+    char receivedString[5]; // Allocate space for 5 characters plus the null terminator
+    if(Serial.read()=='1'){
+    Serial.readBytes(receivedString, 5); // Read 5 characters
+    }
+    //receivedString[5] = '\0'; // Null-terminate the string
+    // Now you can use receivedString as needed
+    Serial.println(receivedString);
+
+		int a,b,c,d,x,y,s;
+	  a = (receivedString[0]-'a')*26;
+		b = receivedString[1]-'a';
+		c = (receivedString[2]-'a')*26;
+		d = receivedString[3]-'a';
+		s = receivedString[4];
+		y = a+b-255;
+		x = c+d-255;
+    //Serial.println(x);
+		//MOTOR CONTROL FUNCTION
+		motor_control(x,y);
+    
+    if(receivedString[4]=='x'){
+			//SHOOTING CODE
+      motor_control(0,0);
+    	//float range = measureDistance();
+  		// Range and height are both proportional to u^2
+    	piston_control(1);
+    	//float speed = 5*sqrt(range);
+    	//IN ABOVE, CHECK IF SQRT EXISTS AND ALSO WRITE THE VALUE OF k
+    	shooting_motor_control(128);
+		}
+		else if(receivedString[4]=='y'){
+			piston_control(0);
+  			shooting_motor_control(0);
+		}
+    
+  }
+}
