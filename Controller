@@ -1,0 +1,40 @@
+#include <RH_ASK.h> // Includes the RadioHead ASK (Amplitude Shift Keying) library.
+#include <SPI.h> // Includes the SPI library. Required by RadioHead, even if not used directly.
+
+
+RH_ASK driver; // Creates an object of the RH_ASK class to handle RF communication.
+const int shoot = 6;
+int shootstate, y_left, y_right, l_send, r_send;
+char message[6];
+
+void create_message(char* msg,int left_speed, int right_speed, bool shoot_signal){
+  	left_speed = left_speed+255;
+  	right_speed = right_speed+255;
+  	msg[0]= left_speed/26+97;
+  	msg[1]= left_speed%26+97;
+  	msg[2]=right_speed/26+97;
+  	msg[3]=right_speed%26+97;
+    msg[5]=0;
+	if(shoot_signal==0) {msg[4] = 'x';} else {msg[4] = 'y';}
+}
+
+
+void setup() {
+  Serial.begin(4800); // Initializes serial communication at 9600 bps.
+  driver.init();
+  pinMode(shoot, INPUT);
+  digitalWrite(shoot, HIGH);
+}
+
+void loop() {
+shootstate = digitalRead(shoot);
+y_left = analogRead(A1);
+y_right = analogRead(A0);
+l_send = map(y_left, 0, 1023, 255, -255);
+r_send = map(y_right, 0, 1023, 255, -255);
+//Serial.println(l_send);
+create_message(message,l_send,r_send,shootstate);
+driver.send((uint8_t *)message, strlen(message));
+driver.waitPacketSent();
+Serial.println(message);
+}
