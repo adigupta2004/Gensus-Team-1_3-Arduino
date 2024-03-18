@@ -1,0 +1,41 @@
+/*
+void setup() {
+  Serial.begin(9600); // Initialize serial communication at 9600 bits per second
+}
+
+void loop() {
+  char myString[] = "Hello1"; // Your 5-character string
+  Serial.write(myString, sizeof(myString) - 1); // Send the string
+  delay(10); // Wait for a second
+}
+*/
+
+#include <RH_ASK.h> // Includes the RadioHead ASK library for handling RF communication.
+#include <SPI.h> // Includes the SPI library, a requirement for the RadioHead library.
+
+RH_ASK driver;
+
+void setup(){
+  Serial.begin(9600);
+  if (!driver.init()) // Initializes the RF driver. Prints an error message if it fails.
+	Serial.println("init failed");
+}
+
+void loop(){
+  	uint8_t msg[5]; // Defines a buffer to store the received message.
+	  uint8_t msglen = sizeof(msg); // Stores the size of the buffer.
+    if (driver.recv(msg, &msglen)) {//
+      char* message = (char*)msg;
+      char msg_send[]="Hello1";
+      
+      msg_send[0]=message[0];
+      msg_send[1]=message[1];
+      msg_send[2]=message[2];
+      msg_send[3]=message[3];
+      msg_send[4]=message[4];
+      msg_send[5]='1';
+      
+  Serial.write(msg_send, sizeof(msg_send) - 1); // Send the string
+  delay(10); // Wait for a second
+}
+}
