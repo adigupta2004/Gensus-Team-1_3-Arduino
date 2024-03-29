@@ -92,16 +92,20 @@ void piston_control(bool run){
   }
 }
 
-void loop() {
-  if (Serial.available()) { // If data is available to read,
-    char receivedString[5]; // Allocate space for 5 characters plus the null terminator
+void readSignal(char* receivedString){
+  if (Serial.available()){
     if(Serial.read()=='1'){
     Serial.readBytes(receivedString, 5); // Read 5 characters
     }
     //receivedString[5] = '\0'; // Null-terminate the string
     // Now you can use receivedString as needed
     Serial.println(receivedString);
+  }
+}
 
+void loop() {
+    char receivedString[5];
+    readSignal(receivedString);
 		int a,b,c,d,x,y,s;
 	  a = (receivedString[0]-'a')*26;
 		b = receivedString[1]-'a';
@@ -119,15 +123,15 @@ void loop() {
       motor_control(0,0);
     	//float range = measureDistance();
   		// Range and height are both proportional to u^2
-    	piston_control(1);
+    	shooting_motor_control(55); delay(2000);
+      piston_control(1);
+      while(receivedString[4]!='y'){
+        readSignal(receivedString);
+        //Serial.println(receivedString);
+      }
+  		shooting_motor_control(0);
+      piston_control(0);
     	//float speed = 5*sqrt(range);
     	//IN ABOVE, CHECK IF SQRT EXISTS AND ALSO WRITE THE VALUE OF k
-    	shooting_motor_control(128);
-		}
-		else if(receivedString[4]=='y'){
-			piston_control(0);
-  			shooting_motor_control(0);
-		}
-    
-  }
+    }
 }
